@@ -8,7 +8,7 @@ int main(int argc, char ** argv)
   char **bufi, **bufend;
   bufi = buf;
   bufend = &buf[9];
-
+  
   while (bufi != bufend){
     *bufi = stri;
     bufi++;
@@ -16,12 +16,16 @@ int main(int argc, char ** argv)
   }
 
   while (bufi != buf){
-    *(*bufi) -= 32;
+    // moved bufi-- to top of while loop,
+    // Else the first read will occurr outside of 
+    // the array str since size of str is 9 and size of buf is 10.
     bufi--;
+    *(*bufi) -= 32;
   }
 
   while (bufi != bufend){
     printf("%c", **bufi);
     bufi++;
   }
+  printf("\n");
 }
