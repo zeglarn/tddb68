@@ -18,8 +18,6 @@ void clear(struct list_item *first); /* free everything dynamically allocated */
 struct list_item * generate(int x);
 
 
-/* Above functions. */
-
 void append(struct list_item *first, int x) {
   if (first->next == NULL) {
     struct list_item *itm = generate(x);
@@ -54,7 +52,7 @@ void print(struct list_item *first) {
   }
 }
 
-//NOT DONE
+
 void input_sorted(struct list_item *first, int x) {
   struct list_item *ptr = first;
 
@@ -102,7 +100,8 @@ int main( int argc, char ** argv ) {
   input_sorted(&root, 0);
   input_sorted(&root, 5);
   prepend(&root, 4);
-  clear(&root);
 
+  print(&root);
+  clear(&root);
   print(&root);
 }
