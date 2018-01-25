@@ -56,14 +56,27 @@ void print(struct list_item *first) {
 
 //NOT DONE
 void input_sorted(struct list_item *first, int x) {
-  if (first->next == NULL) {
-    struct list_item *itm = generate (x);
-    first->next = itm;
-    return;
-  }
+  struct list_item *ptr = first;
 
-  if (first->next != NULL) {
-    
+  while (ptr->next != NULL) {
+    if (ptr->next->value > x) {
+      struct list_item *n = generate(x);
+      n->next = ptr->next;
+      ptr->next = n;
+      return;
+    } else {
+      ptr = ptr->next;
+    }
+  }
+  struct list_item *n = generate(x);
+  ptr->next = n;
+}
+
+void clear(struct list_item *first) {
+  while (first->next != NULL) {
+    struct list_item *tmp = first->next;
+    first->next = first->next->next;
+    free(tmp);
   }
 }
 
@@ -84,8 +97,12 @@ int main( int argc, char ** argv ) {
   // adding items.
   append(&root, 1);
   append(&root, 2);
-  append(&root, 3);
+  append(&root, 4);
+  input_sorted(&root, 3);
+  input_sorted(&root, 0);
+  input_sorted(&root, 5);
   prepend(&root, 4);
+  clear(&root);
 
   print(&root);
 }
