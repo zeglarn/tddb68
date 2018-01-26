@@ -5,6 +5,8 @@
 #include <list.h>
 #include <stdint.h>
 
+#include "filesys/file.h"
+
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -93,8 +95,11 @@ struct thread
     struct list_elem elem;              /* List element. */
 
 #ifdef USERPROG
+#define FDSIZE 128
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+    struct file *fds[128]; //TODO referera frågetecken?
+
 #endif
 
     /* Owned by thread.c. */
