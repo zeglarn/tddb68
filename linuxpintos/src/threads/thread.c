@@ -277,6 +277,13 @@ thread_exit (void)
   ASSERT (!intr_context ());
 
 #ifdef USERPROG
+  struct thread *t = thread_current();
+  int i = 0;
+  for (i; i < FDSIZE; i = i + 1) {
+    if (t->fds[i])
+      file_close(t->fds[i]);
+  }
+
   process_exit ();
 #endif
 
@@ -436,6 +443,14 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+
+  #ifdef USERPROG
+  int i  = 0;
+  for (i; i < FDSIZE; i = i + 1) {
+    t->fds[i] = NULL;
+  }
+  #endif
+
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
