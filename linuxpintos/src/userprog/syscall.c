@@ -64,26 +64,26 @@ syscall_handler (struct intr_frame *f UNUSED)
 }
 
 bool create(void *esp) {
-  const char *file = *(const char **) (esp + 4);
+  const char *file = *((const char **) (esp + 4));
   uint32_t initial_size = *((uint32_t *) (esp + 8));
   return filesys_create(file, initial_size);
 }
 
 int open(void *esp) {
-  const char *file = (const char *) (esp + 4);
-  void *buffer = ((void *) (esp + 8));
-  uint32_t size = *((uint32_t *) (esp + 12));
-  struct file *f = NULL;
+  const char *file = *((const char **) (esp + 4));
   struct thread *thread = thread_current();
 
   int i = 0;
-  for ( i ; i < FDSIZE; i = i +1) {
+  for ( i ; i < FDSIZE; i = i + 1) {
     if (thread->fds[i] == NULL) {
-      struct file *f = filesys_open(file);
-      if (f) {
-        thread->fds[i] = f;
-      }
+      break;
     }
+  }
+
+  struct file *f = filesys_open(file);
+  if (f) {
+    thread->fds[i] = f;
+    return i + 2;
   }
   return -1;
 }
@@ -98,23 +98,30 @@ void close(void *esp) {
 
 int read(void *esp) {
   uint32_t fd = *((uint32_t *) (esp + 4));
+  void *buffer = *((void **) (esp + 8));
+  uint32_t size = *((uint32_t *) (esp + 12));
 
-  if (fd == 1)
-    return -1;
 
   if (fd == 0) {
-    return input_getc();
+    int i = 0;
+    for ( i; i < size; i = i + 1) {
+      uint8_t key = input_getc();
+      buffer = key;
+      buffer = buffer + sizeof(uint8_t);
+      printf("%c", key);
+    }
+    printf("\n");
+    return i;
   }
+
+  if (fd > FDSIZE || fd < 2)
+  return -1;
 
   struct thread *thread = thread_current();
 
   if (!thread->fds[fd - 2]) {
     return -1;
   }
-
-
-  void *buffer = ((void *) (esp + 8));
-  uint32_t size = *((uint32_t *) (esp + 12));
 
   return file_read(thread->fds[fd - 2], buffer, size);
 }
@@ -126,7 +133,7 @@ int write(void *esp) {
 
   struct thread *thread = thread_current();
 
-  if (fd == 0)
+  if (fd < 1 || fd > FDSIZE)
     return -1;
   if (fd == 1) {
     uint32_t offset = 50;
@@ -143,6 +150,5 @@ int write(void *esp) {
   if (!thread->fds[fd - 2])
     return -1;
 
-  printf("hahahah");
   return file_write( thread->fds[fd - 2], buffer, size);
 }
