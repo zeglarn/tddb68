@@ -19,6 +19,10 @@ enum thread_status
 /* Thread identifier type.
    You can redefine this to whatever type you like. */
 typedef int tid_t;
+
+//Bra placering?
+static struct list sleep_list;
+
 #define TID_ERROR ((tid_t) -1)          /* Error value for tid_t. */
 
 /* Thread priorities. */
@@ -94,8 +98,15 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
+    // Element to be put in list of sleeping threads.
+
 #ifdef USERPROG
+#ifndef FDSIZE
 #define FDSIZE 128
+
+struct list_elem sleep_elem;
+struct semaphore sleep_sema;
+int64_t ticks;
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
     struct file *fds[128]; //TODO referera frågetecken?

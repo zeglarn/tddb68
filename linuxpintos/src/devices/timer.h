@@ -20,4 +20,7 @@ void timer_nsleep (int64_t nanoseconds);
 
 void timer_print_stats (void);
 
+//Compare function to timer_sleep()
+bool less_ticks(struct list_elem *elem, struct list_elem *e, void *aux)
+
 #endif /* devices/timer.h */

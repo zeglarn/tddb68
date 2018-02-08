@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "synch.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -87,6 +88,8 @@ thread_init (void)
 
   lock_init (&tid_lock);
   list_init (&ready_list);
+
+  list_init (&sleep_list);
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -449,6 +452,9 @@ init_thread (struct thread *t, const char *name, int priority)
   for (i; i < FDSIZE; i = i + 1) {
     t->fds[i] = NULL;
   }
+
+  sema_init(&(t->sleep_sema), 0);//When sema_down is called the thread will
+                              // immediately shut down
   #endif
 
 }
