@@ -7,6 +7,10 @@
 
 #include "filesys/file.h"
 
+/* LAB 2 */
+#include "threads/synch.h"
+
+
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -25,6 +29,9 @@ typedef int tid_t;
 #define PRI_MIN 0                       /* Lowest priority. */
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
+
+/* LAB 2 */
+#define FDSIZE 128
 
 /* A kernel thread or user process.
 
@@ -94,11 +101,15 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
+    /* LAB 2 */
+    struct list_elem sleep_elem;
+    struct semaphore sleep_sema;
+    int64_t sleep_time;
+
 #ifdef USERPROG
-#define FDSIZE 128
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
-    struct file *fds[128]; //TODO referera frågetecken?
+    struct file *fds[FDSIZE]; //TODO referera frågetecken?
 
 #endif
 

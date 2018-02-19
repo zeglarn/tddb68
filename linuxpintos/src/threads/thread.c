@@ -444,6 +444,9 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
 
+  /* LAB 2 */
+  sema_init(&t->sleep_sema, 0);
+
   #ifdef USERPROG
   int i  = 0;
   for (i; i < FDSIZE; i = i + 1) {
