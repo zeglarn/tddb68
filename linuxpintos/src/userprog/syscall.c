@@ -58,6 +58,10 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_EXIT:
     thread_exit();
     break;
+
+    case SYS_EXEC:
+    f->eax = exec(f->esp);
+    break;
   }
   //printf ("system call!\n");
   //thread_exit ();
@@ -151,4 +155,8 @@ int write(void *esp) {
     return -1;
 
   return file_write( thread->fds[fd - 2], buffer, size);
+}
+
+pid_t exec (const char *cmd_line)  {
+  
 }

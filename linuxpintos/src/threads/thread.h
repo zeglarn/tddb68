@@ -89,6 +89,18 @@ typedef int tid_t;
    only because they are mutually exclusive: only a thread in the
    ready state is on the run queue, whereas only a thread in the
    blocked state is on a semaphore wait list. */
+
+   /* LAB 3 */
+struct context {
+
+  struct list_elem *list_elem;
+
+  struct thread *parent;
+  struct thread *child;
+  enum thread_status child_status;
+};
+
+
 struct thread
   {
     /* Owned by thread.c. */
@@ -105,6 +117,10 @@ struct thread
     struct list_elem sleep_elem;
     struct semaphore sleep_sema;
     int64_t sleep_time;
+
+    /* LAB 3 */
+    struct context *context;
+    con
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

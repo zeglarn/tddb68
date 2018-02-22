@@ -173,7 +173,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
       elem = list_remove(elem);
       sema_up(& t-> sleep_sema);
     } else {
-      elem = list_next(elem);
+      break;
     }
   }
   thread_tick ();
