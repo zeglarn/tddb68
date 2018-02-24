@@ -88,9 +88,23 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED)
 {
-  while (1) {
+  struct context *ctxt;
+  struct list ctxt_list = thread_current()->ctxt_list;
+  for (e = list_begin (&ctxt_list); e != list_end (&ctxt_list); e = list_next (e))
+  {
+    ctxt = list_entry (e, struct context, list_elem);
+    if (child_tid == ctxt->child->tid) {
+      if (ctxt->keep_alive) {
+        sema_down(&ctxt->child->ctxt_sema);
+      }
+      return ctxt->exit_status;
+    }
   }
-  //return -1;
+  return -1;
+
+  /*while (1) {
+  }
+  //return -1;*/
 }
 
 /* Free the current process's resources. */
@@ -116,6 +130,32 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
+
+    /* LAB 3*/
+
+    if (!cur->ctxt->keep_alive) {
+      free(cur->ctxt);
+      sema_up(&cur->ctxt_sema);
+    }
+    else {
+      cur->ctxt->keep_alive = false;
+    }
+
+    struct list_elem *e;
+    struct list ctxt_list = thread_current()->ctxt_list;
+
+    for (e = list_begin (&ctxt_list); e != list_end (&ctxt_list))
+      {
+        struct context *ctxt = list_entry (e, struct context, list_elem);
+        e = list_next (e);
+        if (!ctxt->keep_alive) {
+          free(ctxt);
+        }
+        else {
+          ctxt->keep_alive = false;
+        }
+      }
+
 }
 
 /* Sets up the CPU for running user code in the current

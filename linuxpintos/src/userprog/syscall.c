@@ -160,3 +160,8 @@ int write(void *esp) {
 pid_t exec (const char *cmd_line)  {
   
 }
+
+void exit(int status) {
+  thread_current()->ctxt->exit_status = status;
+  thread_exit();
+}

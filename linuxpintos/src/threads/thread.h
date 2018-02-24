@@ -97,7 +97,8 @@ struct context {
 
   struct thread *parent;
   struct thread *child;
-  enum thread_status child_status;
+  int32_t exit_status;
+  bool keep_alive;
 };
 
 
@@ -119,8 +120,9 @@ struct thread
     int64_t sleep_time;
 
     /* LAB 3 */
-    struct context *context;
-    con
+    struct context *ctxt;
+    struct list ctxt_list;
+    struct semaphore ctxt_sema;
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
