@@ -93,7 +93,7 @@ typedef int tid_t;
    /* LAB 3 */
 struct context {
 
-  struct list_elem *list_elem;
+  struct list_elem elem;
 
   struct thread *parent;
   struct thread *child;

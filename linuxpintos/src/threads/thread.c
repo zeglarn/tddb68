@@ -178,7 +178,7 @@ thread_create (const char *name, int priority,
   init_thread (t, name, priority);
 
   /* LAB 3 */
-  sema_down(&t->ctxt_sema)
+
 
   tid = t->tid = allocate_tid ();
 
@@ -452,17 +452,18 @@ init_thread (struct thread *t, const char *name, int priority)
   sema_init(&t->sleep_sema, 0);
 
   /* LAB 3 */
+  #ifdef USERPROG
   sema_init(&t->ctxt_sema, 0);
   list_init(&t->ctxt_list);
   t->ctxt = malloc(sizeof(struct context));
   t->ctxt->keep_alive = true;
   t->ctxt->parent = thread_current();
   t->ctxt->child = t;
-  list_push_front(&thread_current()->ctxt_list, t->ctxt->list_elem);
+  list_push_front(&thread_current()->ctxt_list, &t->ctxt->elem);
 
 
 
-  #ifdef USERPROG
+
   int i  = 0;
   for (i; i < FDSIZE; i = i + 1) {
     t->fds[i] = NULL;

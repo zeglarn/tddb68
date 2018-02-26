@@ -40,6 +40,10 @@ process_execute (const char *file_name)
 
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+#ifdef USERPROG
+  sema_down(&thread_current()->ctxt_sema);
+#endif
+
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy);
   return tid;
@@ -60,6 +64,11 @@ start_process (void *file_name_)
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (file_name, &if_.eip, &if_.esp);
+
+  /* LAB 3 */
+#ifdef USERPROG
+  sema_up(&thread_current()->ctxt_sema);
+#endif
 
   /* If load failed, quit. */
   palloc_free_page (file_name);
@@ -89,10 +98,11 @@ int
 process_wait (tid_t child_tid UNUSED)
 {
   struct context *ctxt;
-  struct list ctxt_list = thread_current()->ctxt_list;
-  for (e = list_begin (&ctxt_list); e != list_end (&ctxt_list); e = list_next (e))
+  struct list *ctxt_list = &thread_current()->ctxt_list;
+  struct list_elem *e;
+  for (e = list_begin (ctxt_list); e != list_end (ctxt_list); e = list_next (e))
   {
-    ctxt = list_entry (e, struct context, list_elem);
+    ctxt = list_entry (e, struct context, elem);
     if (child_tid == ctxt->child->tid) {
       if (ctxt->keep_alive) {
         sema_down(&ctxt->child->ctxt_sema);
@@ -112,6 +122,33 @@ void
 process_exit (void)
 {
   struct thread *cur = thread_current ();
+
+  /* LAB 3*/
+
+
+  if (!cur->ctxt->keep_alive) {
+    free(cur->ctxt);
+  }
+  else {
+    cur->ctxt->keep_alive = false;
+    sema_up(&cur->ctxt_sema);
+  }
+
+  struct list_elem *e;
+  struct list *ctxt_list = &thread_current()->ctxt_list;
+
+  for (e = list_begin (ctxt_list); e != list_end (ctxt_list);)
+  {
+    struct context *ctxt = list_entry (e, struct context, elem);
+    e = list_next (e);
+    if (!ctxt->keep_alive) {
+      free(ctxt);
+    }
+    else {
+      ctxt->keep_alive = false;
+    }
+  }
+
   uint32_t *pd;
 
   /* Destroy the current process's page directory and switch back
@@ -131,30 +168,6 @@ process_exit (void)
       pagedir_destroy (pd);
     }
 
-    /* LAB 3*/
-
-    if (!cur->ctxt->keep_alive) {
-      free(cur->ctxt);
-      sema_up(&cur->ctxt_sema);
-    }
-    else {
-      cur->ctxt->keep_alive = false;
-    }
-
-    struct list_elem *e;
-    struct list ctxt_list = thread_current()->ctxt_list;
-
-    for (e = list_begin (&ctxt_list); e != list_end (&ctxt_list))
-      {
-        struct context *ctxt = list_entry (e, struct context, list_elem);
-        e = list_next (e);
-        if (!ctxt->keep_alive) {
-          free(ctxt);
-        }
-        else {
-          ctxt->keep_alive = false;
-        }
-      }
 
 }
 

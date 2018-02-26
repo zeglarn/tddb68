@@ -14,6 +14,9 @@ int open(void *esp);
 void close(void *esp);
 int read(void *esp);
 int write(void *esp);
+void exit(void *esp);
+tid_t exec(void *esp);
+int wait(void *esp);
 
 
 
@@ -56,11 +59,15 @@ syscall_handler (struct intr_frame *f UNUSED)
     break;
 
     case SYS_EXIT:
-    thread_exit();
+    exit(f->esp);
     break;
 
     case SYS_EXEC:
     f->eax = exec(f->esp);
+    break;
+
+    case SYS_WAIT:
+    f->eax = wait(f->esp);
     break;
   }
   //printf ("system call!\n");
@@ -157,11 +164,18 @@ int write(void *esp) {
   return file_write( thread->fds[fd - 2], buffer, size);
 }
 
-pid_t exec (const char *cmd_line)  {
-  
+tid_t exec (void *esp)  {
+  const char *cmd_line = *((const char **) (esp + 4));
+  return process_execute(cmd_line);
 }
 
-void exit(int status) {
+void exit(void *esp) {
+  int32_t status = *((int32_t *) (esp + 4));
   thread_current()->ctxt->exit_status = status;
   thread_exit();
+}
+
+int wait(void *esp) {
+  tid_t tid = *((tid_t *) (esp + 4));
+  return process_wait(tid);
 }
