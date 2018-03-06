@@ -130,7 +130,9 @@ process_exit (void)
     free(cur->ctxt);
   }
   else {
+    lock_acquire(&cur->t_lock);
     cur->ctxt->keep_alive = false;
+    lock_release(&cur->t_lock);
     sema_up(&cur->ctxt_sema);
   }
 
@@ -145,7 +147,9 @@ process_exit (void)
       free(ctxt);
     }
     else {
-      ctxt->keep_alive = false;
+      lock_acquire(&cur->t_lock);
+      cur->ctxt->keep_alive = false;
+      lock_release(&cur->t_lock);
     }
   }
 

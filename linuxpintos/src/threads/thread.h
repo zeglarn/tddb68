@@ -123,6 +123,7 @@ struct thread
     struct context *ctxt;
     struct list ctxt_list;
     struct semaphore ctxt_sema;
+    struct lock t_lock;
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
