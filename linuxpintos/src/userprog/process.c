@@ -38,19 +38,42 @@ process_execute (const char *file_name)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
 
+  /* LAB 3 */
+  struct thread *parent = thread_current();
+  struct context *ctxt = malloc(sizeof(struct context));
+  ctxt->file_name = fn_copy;
+  ctxt->parent = parent;
+  ctxt->success = false;
+
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
-  if (tid == TID_ERROR)
+  tid = thread_create (file_name, PRI_DEFAULT, start_process, ctxt);
+
+  /* LAB 3 */
+
+  if (tid == TID_ERROR) {
     palloc_free_page (fn_copy);
+  } else {
+    sema_down(&parent->wait_sema);
+  }
+
+  bool success = ctxt->success;
+  free(ctxt);
+
+  if (!success) {
+    return TID_ERROR;
+  }
   return tid;
 }
 
 /* A thread function that loads a user process and starts it
    running. */
 static void
-start_process (void *file_name_)
+start_process (void *_ctxt)
 {
-  char *file_name = file_name_;
+  struct context *ctxt = (struct context *) _ctxt;
+  struct thread *parent = ctxt->parent;
+
+  char *file_name = ctxt->file_name;
   struct intr_frame if_;
   bool success;
 
@@ -61,10 +84,31 @@ start_process (void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (file_name, &if_.eip, &if_.esp);
 
+  /* LAB 3 */
+  ctxt->success = success;
+
   /* If load failed, quit. */
   palloc_free_page (file_name);
-  if (!success)
+  if (!success) {
+    sema_up(&parent->wait_sema);
     thread_exit ();
+  }
+
+  struct relation *rel = malloc(sizeof(struct relation));
+  rel = malloc(sizeof(struct relation));
+  rel->exit_status = -1;
+  rel->parent = parent;
+  rel->keep_alive = true;
+  rel->child_tid = thread_current()->tid;
+  thread_current()->rel = rel;
+  lock_init(&rel->lock);
+  sema_init(&rel->rel_sema, 0);
+
+  lock_acquire(&rel->lock);
+  list_push_back(&parent->children, &rel->relation_elem);
+  lock_release(&rel->lock);
+
+  sema_up(&parent->wait_sema);
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -88,8 +132,21 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED)
 {
-  while (1) {
+  struct relation *rel;
+  struct thread *parent = thread_current();
+  struct list *children = &parent->children;
+  struct list_elem *e;
+  for (e = list_begin (children); e != list_end (children); e = list_next (e))
+  {
+    rel = list_entry (e, struct relation, relation_elem);
+    if (child_tid == rel->child_tid) {
+      if (rel->keep_alive) {
+        sema_down(&rel->rel_sema);
+      }
+      return rel->exit_status;
+    }
   }
+  return -1;
   //return -1;
 }
 
@@ -98,6 +155,36 @@ void
 process_exit (void)
 {
   struct thread *cur = thread_current ();
+  /* LAB 3*/
+  struct relation *rel = cur->rel;
+
+
+  if (!rel->keep_alive) {
+    free(cur->rel);
+  }
+  else {
+    lock_acquire(&rel->lock);
+    rel->keep_alive = false;
+    lock_release(&rel->lock);
+    sema_up(&rel->rel_sema);
+  }
+
+  struct list_elem *e;
+  struct list *children = &cur->children;
+
+  for (e = list_begin (children); e != list_end (children);)
+  {
+    rel = list_entry (e, struct relation, relation_elem);
+    e = list_next (e);
+    if (!rel->keep_alive) {
+      free(rel);
+    }
+    else {
+      lock_acquire(&rel->lock);
+      rel->keep_alive = false;
+      lock_release(&rel->lock);
+    }
+  }
   uint32_t *pd;
 
   /* Destroy the current process's page directory and switch back

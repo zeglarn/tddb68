@@ -447,6 +447,11 @@ init_thread (struct thread *t, const char *name, int priority)
   /* LAB 2 */
   sema_init(&t->sleep_sema, 0);
 
+  /* LAB 3 */
+  sema_init(&t->wait_sema, 0);
+  list_init(&t->children);
+  t->rel = NULL;
+
   #ifdef USERPROG
   int i  = 0;
   for (i; i < FDSIZE; i = i + 1) {

@@ -106,15 +106,40 @@ struct thread
     struct semaphore sleep_sema;
     int64_t sleep_time;
 
+    /* LAB 3 */
+    struct list children;
+    struct semaphore wait_sema;
+    struct realation *rel;
+
+
+    /* LAB 1 */
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
     struct file *fds[FDSIZE]; //TODO referera frågetecken?
-
 #endif
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
+  };
+
+/* LAB 3 */
+struct context
+  {
+    bool success;
+    struct thread *parent;
+    char *file_name;
+  };
+
+struct relation
+  {
+    int32_t exit_status;
+    struct list_elem relation_elem;
+    struct thread *parent;
+    struct semaphore rel_sema;
+    struct lock lock;
+    bool keep_alive;
+    tid_t child_tid;
   };
 
 /* If false (default), use round-robin scheduler.
