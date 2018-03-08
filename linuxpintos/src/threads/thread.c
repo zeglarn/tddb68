@@ -61,6 +61,9 @@ static void idle (void *aux UNUSED);
 static struct thread *running_thread (void);
 static struct thread *next_thread_to_run (void);
 static void init_thread (struct thread *, const char *name, int priority);
+/* Lab 2 */
+static void init_ctxt (struct thread *c);
+
 static bool is_thread (struct thread *) UNUSED;
 static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
@@ -177,7 +180,6 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
 
-  /* LAB 3 */
 
 
   tid = t->tid = allocate_tid ();
@@ -195,6 +197,21 @@ thread_create (const char *name, int priority,
   /* Stack frame for switch_threads(). */
   sf = alloc_frame (t, sizeof *sf);
   sf->eip = switch_entry;
+
+  /* LAB 3 */
+
+  list_init(&thread_current()->ctxt_list);
+  init_ctxt(t);
+  sema_init(&t->ctxt_sema, 0);
+
+  #ifdef USERPROG
+
+  int i  = 0;
+  for (i; i < FDSIZE; i = i + 1) {
+    t->fds[i] = NULL;
+  }
+  #endif
+
 
   /* Add to run queue. */
   thread_unblock (t);
@@ -452,24 +469,19 @@ init_thread (struct thread *t, const char *name, int priority)
   sema_init(&t->sleep_sema, 0);
 
   /* LAB 3 */
-  #ifdef USERPROG
-  sema_init(&t->ctxt_sema, 0);
-  list_init(&t->ctxt_list);
-  t->ctxt = malloc(sizeof(struct context));
-  t->ctxt->keep_alive = true;
-  t->ctxt->parent = thread_current();
-  t->ctxt->child = t;
-  list_push_front(&thread_current()->ctxt_list, &t->ctxt->elem);
 
 
+}
 
-
-  int i  = 0;
-  for (i; i < FDSIZE; i = i + 1) {
-    t->fds[i] = NULL;
-  }
-  #endif
-
+static void init_ctxt (struct thread *c)
+{
+  //ASSERT (c->ctxt != NULL);
+  c->ctxt = malloc(sizeof(struct context));
+  c->ctxt->exit_status = -1;
+  c->ctxt->keep_alive = true;
+  //c->ctxt->parent = thread_current();
+  c->ctxt->child = c;
+  list_push_front(&thread_current()->ctxt_list, &c->ctxt->elem);
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and

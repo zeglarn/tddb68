@@ -40,6 +40,8 @@ process_execute (const char *file_name)
 
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+
+  /* LAB 3 */
 #ifdef USERPROG
   sema_down(&thread_current()->ctxt_sema);
 #endif

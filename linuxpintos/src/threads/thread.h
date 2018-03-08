@@ -125,7 +125,7 @@ struct thread
     struct semaphore ctxt_sema;
     struct lock t_lock;
 
-#ifdef USERPROG
+    #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
     struct file *fds[FDSIZE]; //TODO referera frågetecken?
